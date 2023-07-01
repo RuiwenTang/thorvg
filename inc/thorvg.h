@@ -1224,6 +1224,8 @@ public:
      */
     static uint32_t identifier() noexcept;
 
+    static std::unique_ptr<Shape> triangulation(const Shape* shape);
+
     _TVG_DECLARE_PRIVATE(Shape);
 };
 
