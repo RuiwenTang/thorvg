@@ -37,6 +37,8 @@ uint32_t GlGeometry::getPrimitiveCount()
 
 const GlSize GlGeometry::getPrimitiveSize(const uint32_t primitiveIndex) const
 {
+    uint32_t vao = 0;
+    glGenVertexArrays(1, &vao);
     if (primitiveIndex >= mPrimitives.size()) return GlSize();
     GlSize size = mPrimitives[primitiveIndex].mBottomRight - mPrimitives[primitiveIndex].mTopLeft;
     return size;
