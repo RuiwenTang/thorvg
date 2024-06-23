@@ -142,9 +142,12 @@ bool GlRenderer::preRender()
         initShaders();
     }
 
-    mRenderPassStack.emplace_back(GlRenderPass(mRootTarget.get()));
+    if (mRenderPassStack.empty()) {
+        mRenderPassStack.emplace_back(GlRenderPass(mRootTarget.get()));
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
 
@@ -279,7 +282,7 @@ bool GlRenderer::renderShape(RenderData data)
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
-    if (sdata->updateFlag == RenderUpdateFlag::None) return false;
+    if (sdata->updateFlag == RenderUpdateFlag::None) return true;
 
     uint8_t r = 0, g = 0, b = 0, a = 0;
     int32_t drawDepth1 = 0, drawDepth2 = 0, drawDepth3 = 0;
@@ -447,7 +450,9 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         if (rshape.strokeFill()) sdata->updateFlag = static_cast<RenderUpdateFlag>(RenderUpdateFlag::GradientStroke | sdata->updateFlag);
     }
 
-    if (sdata->updateFlag == RenderUpdateFlag::None) return sdata;
+    if (sdata->updateFlag == RenderUpdateFlag::None) {
+        return sdata;
+    }
 
     sdata->geometry->updateTransform(transform, sdata->viewWd, sdata->viewHt);
     sdata->geometry->setViewport(RenderRegion{

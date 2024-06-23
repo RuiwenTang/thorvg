@@ -29,6 +29,14 @@
 #include <thorvg.h>
 #include <SDL.h>
 #include <SDL_syswm.h>
+
+#ifdef THORVG_GL_RASTER_SUPPORT
+    #ifndef GL_GLEXT_PROTOTYPES
+        #define GL_GLEXT_PROTOTYPES
+    #endif
+    #include <SDL_opengl.h>
+#endif
+
 #ifdef _WIN32
     #include <windows.h>
     #ifndef PATH_MAX
@@ -311,6 +319,8 @@ struct SwWindow : Window
 
 struct GlWindow : Window
 {
+    using PFNGLVIEWPORT = void(*)(GLint,GLint,GLsizei,GLsizei);
+
     SDL_GLContext context;
 
     unique_ptr<tvg::GlCanvas> canvas = nullptr;
@@ -331,6 +341,9 @@ struct GlWindow : Window
         }
 
         context = SDL_GL_CreateContext(window);
+        
+        fBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC) SDL_GL_GetProcAddress("glBindFramebuffer");
+        fViewport = (PFNGLVIEWPORT) SDL_GL_GetProcAddress("glViewport");
     }
 
     virtual ~GlWindow()
@@ -356,9 +369,12 @@ struct GlWindow : Window
 
     void resize() override
     {
+        SDL_GL_MakeCurrent(window, context);
+        fBindFramebuffer(GL_FRAMEBUFFER, 0);
+        fViewport(0, 0, width, height);
         //Set the canvas target and draw on it.
         verify(canvas->target(0, width, height));
-
+        canvas->update();
         //Clear the canvas target buffer
         verify(canvas->clear(false));
     }
@@ -367,6 +383,9 @@ struct GlWindow : Window
     {
         SDL_GL_SwapWindow(window);
     }
+    
+    PFNGLBINDFRAMEBUFFERPROC fBindFramebuffer = nullptr;
+    PFNGLVIEWPORT fViewport = nullptr;
 };
 
 /************************************************************************/
